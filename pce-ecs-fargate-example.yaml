@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  "PCE ECS Fargate integaration example"
+
+Parameters:
+  PceApiKey:
+    Description: "PolyScale API key that is enabled for use by PCE."
+    Type: String
+
+Resources:
+  PceEcsExampleVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  PceEcsExampleSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref PceEcsExampleVpc
+
+  PceEcsExampleRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref PceEcsExampleVpc
+
+  PceEcsExampleInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+
+  PceEcsExampleVPCGatewayAttachment:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref PceEcsExampleVpc
+      InternetGatewayId: !Ref PceEcsExampleInternetGateway
+
+  PceEcsExampleInternetRoute:
+    Type: "AWS::EC2::Route"
+    DependsOn:
+      - PceEcsExampleInternetGateway
+      - PceEcsExampleVPCGatewayAttachment
+    Properties:
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref PceEcsExampleInternetGateway
+      RouteTableId: !Ref PceEcsExampleRouteTable
+
+  PceEcsSubnetRouteAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      RouteTableId: !Ref PceEcsExampleRouteTable
+      SubnetId: !Ref PceEcsExampleSubnet
+
+  PceEcsExampleSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'PCE ECS Fargate integaration example'
+      GroupName: PceEcsExampleSecurityGroup
+      VpcId: !Ref PceEcsExampleVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9000
+          ToPort: 9000
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  ECSCluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties:
+      ClusterName: PceEcsExampleCluster
+      CapacityProviders: [ 'FARGATE' ]
+
+  ECSService:
+   Type: 'AWS::ECS::Service'
+   Properties:
+      Cluster: !Ref ECSCluster
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref PceEcsExampleSubnet
+          SecurityGroups:
+            - !Ref PceEcsExampleSecurityGroup
+      ServiceName: PceEcsExampleService
+      TaskDefinition: !Ref PceEcsExampleTaskDefinition
+
+  PceEcsExampleTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: 256
+      Memory: 512
+      ContainerDefinitions:
+        - Name: PceEcsExample
+          Image: 'ghcr.io/polyscale/pce:stable'
+          Environment:
+            - Name: PCE_API_KEY
+              Value: !Ref PceApiKey
+          Memory: 512
+          PortMappings:
+            - ContainerPort: 9000
+              Protocol: tcp
