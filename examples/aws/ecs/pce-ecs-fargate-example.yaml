@@ -68,6 +68,24 @@ Resources:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
 
+  PceEcsExampleExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: "PceEcsExampleExecutionRole"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+
+  PceEcsExampleLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: PceEcsExampleLogGroup
+
   PceEcsExampleCluster:
     Type: 'AWS::ECS::Cluster'
     Properties:
@@ -97,6 +115,7 @@ Resources:
       NetworkMode: awsvpc
       Cpu: 256
       Memory: 512
+      ExecutionRoleArn: !Ref PceEcsExampleExecutionRole
       ContainerDefinitions:
         - Name: PceEcsExample
           Image: 'ghcr.io/polyscale/pce:stable'
@@ -115,3 +134,10 @@ Resources:
               Protocol: tcp
             - ContainerPort: 10000
               Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref PceEcsExampleLogGroup
+              awslogs-region: "us-east-1"
+              awslogs-stream-prefix: "pce-ecs-example"
+
