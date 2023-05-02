@@ -68,16 +68,16 @@ Resources:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
 
-  ECSCluster:
+  PceEcsExampleCluster:
     Type: 'AWS::ECS::Cluster'
     Properties:
       ClusterName: PceEcsExampleCluster
       CapacityProviders: [ 'FARGATE' ]
 
-  ECSService:
+  PceEcsExampleService:
    Type: 'AWS::ECS::Service'
    Properties:
-      Cluster: !Ref ECSCluster
+      Cluster: !Ref PceEcsExampleCluster
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
