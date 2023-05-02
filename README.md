@@ -2,4 +2,4 @@
 
 ## Folder structure
 
-- `exmples`- Examples showing how to launch PCE using different infrastructure.
+- `examples`- Examples showing how to launch PCE using different infrastructure.
