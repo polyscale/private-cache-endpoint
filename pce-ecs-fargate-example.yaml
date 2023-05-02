@@ -62,7 +62,7 @@ Resources:
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 9000
-          ToPort: 9000
+          ToPort: 10000
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: -1
@@ -106,4 +106,12 @@ Resources:
           Memory: 512
           PortMappings:
             - ContainerPort: 9000
+              Protocol: tcp
+            - ContainerPort: 9001
+              Protocol: tcp
+            - ContainerPort: 9010
+              Protocol: tcp
+            - ContainerPort: 9020
+              Protocol: tcp
+            - ContainerPort: 10000
               Protocol: tcp
