@@ -8,6 +8,14 @@ Parameters:
     Description: "PolyScale API key that is enabled for use by PCE."
     Type: String
 
+  PceTag:
+    Description: "If you run mulitple PCEs on your network using the PceTag option will aid in distinguishing metric traffic in the PolyScale webapp."
+    Type: String
+    Default: ""
+
+Conditions:
+  HasPceTag: !Not [!Equals [!Ref PceTag, ""]]
+
 Resources:
   PceEcsExampleVpc:
     Type: AWS::EC2::VPC
@@ -122,6 +130,8 @@ Resources:
           Environment:
             - Name: PCE_API_KEY
               Value: !Ref PceApiKey
+            - Name: PCE_TAG
+              Value: !If [HasPceTag, !Ref PceTag, !Join [ "", [ "PCE-", !Ref 'AWS::Region']]]
           Memory: 512
           PortMappings:
             - ContainerPort: 9000
